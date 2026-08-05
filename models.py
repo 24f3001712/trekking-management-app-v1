@@ -1,7 +1,8 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from enum import Enum, unique
-from datetime import datetime
+from enum import Enum
+from datetime import datetime, UTC
+from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
@@ -38,21 +39,16 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
     role = db.Column(db.Enum(Role), nullable=False)
-    admin = db.relationship('Admin', back_populates='user', uselist=False)
     staff = db.relationship('Staff', back_populates='user', uselist=False)
     trekker = db.relationship('Trekker', back_populates='user', uselist=False)
-
-class Admin(db.Model):
-    __tablename__ = "admin"
-    id = db.Column(db.Integer, primary_key=True, unique=True)
-    user = db.relationship('User', back_populates='admin')
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True, nullable=False)
+    def set_hash_password(self, pwd):
+        self.password = generate_password_hash(pwd)
+    def verify_password(self, pwd):
+        return check_password_hash(self.password, pwd)
 
 class Staff(db.Model):
     __tablename__ = "staff"
     id = db.Column(db.Integer, primary_key=True, unique=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True)
     status = db.Column(db.Enum(UserStatus), default=UserStatus.approved)
     user = db.relationship('User', back_populates='staff')
     treks = db.relationship("Trek", back_populates="staff")
@@ -86,7 +82,7 @@ class Trek(db.Model):
 class Booking(db.Model):
     __tablename__ = "bookings"
     id = db.Column(db.Integer, primary_key=True)
-    booking_date = db.Column(db.DateTime, default=datetime.utcnow)
+    booking_date = db.Column(db.DateTime(timezone=True), default=lambda:datetime.now(UTC))
     status = db.Column(db.Enum(BookStatus), default=BookStatus.booked)
     participants = db.Column(db.Integer, default=1)
     treks = db.relationship("Trek", back_populates="bookings")
