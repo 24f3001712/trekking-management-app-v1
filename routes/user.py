@@ -50,23 +50,33 @@ def booktrek():
     )
 
     trek.available_slots -= 1
-    trek.participants = (trek.participants or 0) + 1
+    booking.participants = (booking.participants or 0) + 1
 
     db.session.add(booking)
     db.session.commit()
 
     return redirect(url_for("user.userdashboard"))
 
-@user_Bp.route('/cancelbooking', methods=['POST', 'GET'])
-def cancelbooking():
+@user_Bp.route('/cancelbooking/<int:booking_id>', methods=['POST', 'GET'])
+def cancelbooking(booking_id):
     trek_id = request.form.get('trek_id')
     trek = Trek.query.get_or_404(trek_id)
     trekker = current_user.trekker
-    booking = Booking.query.filter_by(trek_id=trek.id, trekker_id=trekker.id, status=BookStatus.booked).first()
+    booking = Booking.query.filter_by(id=booking_id, trekker_id=trekker.id, status=BookStatus.booked).first()
     booking.status = BookStatus.cancelled
     booking.participants = max(0, (booking.participants or 0) - 1)
     trek.available_slots = (trek.available_slots or 0) + 1
     db.session.add(booking)
     db.session.add(trek)
     db.session.commit()
-    return redirect(url_for('user.userdashboard'))
+    return redirect(url_for('user.mybookings', trekker_id=trekker.id))
+
+@user_Bp.route('/mybookings', methods=['GET','POST'])
+def mybookings():
+    bookings = Booking.query.filter_by(trekker_id=current_user.id).all()
+    return render_template('user_bookings.html', bookings=bookings)
+
+@user_Bp.route('/history', methods=['GET','POST'])
+def history():
+    bookings = Booking.query.filter_by(trekker_id=current_user.id).all()
+    return render_template('user_history.html', bookings=bookings)

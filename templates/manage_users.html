@@ -26,10 +26,13 @@
                                 <td>{{ trekker.user.username }}</td>
                                 <td>{{ trekker.user.email }}</td>
                                 <td>
+                                    <div class="d-flex justify-content-between">
                                     <form action="{{ url_for('admin.manageusers') }}" method="POST">
                                         <input type="hidden" name="trekker_id" value="{{ trekker.id }}">
                                         <button type="submit" name="action" value="blacklist" class="btn btn-primary me-2">Blacklist</button>
-                                    </form>                
+                                        <button type="submit" name="action" value="remove" class="btn btn-secondary">Remove</button>
+                                    </form>        
+                                </div>        
                                 </td>
                             </tr>
                         </tbody>

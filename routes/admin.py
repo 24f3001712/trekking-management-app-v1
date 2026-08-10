@@ -65,7 +65,7 @@ def remblstaff():
         res = request.form.get('action')
         staff = Staff.query.get_or_404(staff_id)
         if res == 'remove':
-            db.session.delete(staff)
+            staff.is_deleted = True
         elif res == 'blacklist':
             staff.status = UserStatus.blacklisted
         elif res == 'remblack':
@@ -107,17 +107,17 @@ def addtrek():
 
 @admin_Bp.route('/managetrek', methods=['GET', 'POST'], endpoint='managetrek')
 def managetrek():
-    treks = Trek.query.all()
+    treks = Trek.query.filter_by(is_deleted=False).all()
     return render_template('manage_trek.html', treks=treks)
 
 @admin_Bp.route('/viewtrek/<int:trek_id>', methods=['GET'], endpoint='viewtrek')
 def viewtrek(trek_id):
-    trek = Trek.query.get_or_404(trek_id)
+    trek = Trek.query.filter_by(id=trek_id, is_deleted=False).first()
     return render_template('view_trek_admin.html', trek=trek)
 
 @admin_Bp.route('/edittrek/<int:trek_id>', methods=['GET', 'POST'], endpoint='edittrek')
 def edittrek(trek_id):  
-    trek = Trek.query.get_or_404(trek_id)
+    trek = Trek.query.filter_by(id=trek_id, is_deleted=False).first()
     all_staff = User.query.filter_by(role=Role.staff).all()
     if request.method == 'POST':
         trek.trek_name = request.form.get('trek_name')
@@ -129,12 +129,8 @@ def edittrek(trek_id):
         trek.staff_id = int(request.form.get('assigned_staff_id'))
         desc = request.form.get('description')
         img = request.form.get('image')
-        sdate = datetime.strptime(
-            request.form.get('start_date'), '%Y-%m-%d'
-        ).date()
-        edate = datetime.strptime(
-            request.form.get('end_date'), '%Y-%m-%d'
-        ).date()
+        sdate = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date()
+        edate = datetime.strptime(request.form.get('end_date'), '%Y-%m-%d').date()
         if sdate > edate:
             return render_template('add_trek.html', all_staff=all_staff, error="Start date cannot be after end date.")
         trek.start_date = sdate
@@ -149,8 +145,8 @@ def edittrek(trek_id):
 
 @admin_Bp.route('/deletetrek/<int:trek_id>', methods=['POST'])
 def deletetrek(trek_id):
-    trek = Trek.query.get_or_404(trek_id)
-    db.session.delete(trek)
+    trek = Trek.query.get_or_404(trek_id, is_deleted=False)
+    trek.is_deleted = True
     db.session.commit()
     return redirect(url_for('admin.managetrek'))
 
@@ -169,6 +165,8 @@ def manageusers():
             trekker.status = UserStatus.blacklisted
         elif res == 'rembl':
             trekker.status = UserStatus.approved
+        elif res == 'remove':
+            trekker.is_deleted = True
         db.session.commit()
         return redirect( url_for('admin.manageusers'))
     return render_template('manage_users.html', trekkers=trekkers, blist=blist, tlen=tlen, blen=blen)
@@ -176,6 +174,6 @@ def manageusers():
 @admin_Bp.route('/booking', methods=['GET','POST'])
 def bookings():
     bookings = Booking.query.all()
-    return render_template('booking.html', bookings=bookings)
+    return render_template('booking.html', bookings=bookings, booklen=len(bookings))
 
 

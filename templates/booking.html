@@ -25,9 +25,9 @@
                             <tr>
                                 <td>{{ booking.id }}</td>
                                 <td>{{ booking.trekker.user.username }}</td>
-                                <td>{{ booking.trek.name }}</td>
+                                <td>{{ booking.treks.name }}</td>
                                 <td>{{ booking.booking_date }}</td>
-                                <td>{{ booking.status }}</td>
+                                <td>{{ booking.status.value }}</td>
                             </tr>
                         </tbody>
                         {% endfor %}

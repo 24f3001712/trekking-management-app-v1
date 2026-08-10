@@ -53,6 +53,7 @@ class Staff(db.Model):
     __tablename__ = "staff"
     id = db.Column(db.Integer, primary_key=True, unique=True)
     status = db.Column(db.Enum(UserStatus), default=UserStatus.pending)
+    is_deleted = db.Column(db.Boolean, default=False)
     user = db.relationship('User', back_populates='staff')
     treks = db.relationship("Trek", back_populates="staff")
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True, nullable=False)
@@ -61,6 +62,7 @@ class Trekker(db.Model):
     __tablename__ = "trekker"
     id = db.Column(db.Integer, primary_key=True, unique=True)
     status = db.Column(db.Enum(UserStatus), default=UserStatus.approved)
+    is_deleted = db.Column(db.Boolean, default=False)
     user = db.relationship('User', back_populates='trekker')
     bookings = db.relationship("Booking", back_populates="trekker")
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True, nullable=False)
@@ -74,14 +76,15 @@ class Trek(db.Model):
     available_slots = db.Column(db.Integer, nullable=False)
     start_date = db.Column(db.Date)
     end_date = db.Column(db.Date)
+    completion_date = db.Column(db.Date, nullable=True)
     description = db.Column(db.Text, nullable=True)
     image = db.Column(db.String(2048), nullable=True)
     difficulty = db.Column(db.Enum(Diff))
     status = db.Column(db.Enum(TrekStatus), nullable=False, default=TrekStatus.pending)
+    is_deleted = db.Column(db.Boolean, default=False)
     staff = db.relationship("Staff", back_populates="treks")
     bookings = db.relationship("Booking", back_populates="treks")
     staff_id = db.Column(db.Integer, db.ForeignKey("staff.id"), nullable=False)
-    __table_args__ = (db.UniqueConstraint("name","start_date","location"),)
 
 class Booking(db.Model):
     __tablename__ = "bookings"
