@@ -17,7 +17,9 @@ class Diff(Enum):
     hard = "Hard"
 
 class UserStatus(Enum):
+    pending = "Pending"
     approved = "Approved"
+    rejected = "Rejected"
     blacklisted = "Blacklisted"
 
 class TrekStatus(Enum):
@@ -28,6 +30,7 @@ class TrekStatus(Enum):
     completed = "Completed"
 
 class BookStatus(Enum):
+    open = "Open"
     booked = "Booked"
     cancelled = "Cancelled"
     completed = "Completed"
@@ -49,7 +52,7 @@ class User(UserMixin, db.Model):
 class Staff(db.Model):
     __tablename__ = "staff"
     id = db.Column(db.Integer, primary_key=True, unique=True)
-    status = db.Column(db.Enum(UserStatus), default=UserStatus.approved)
+    status = db.Column(db.Enum(UserStatus), default=UserStatus.pending)
     user = db.relationship('User', back_populates='staff')
     treks = db.relationship("Trek", back_populates="staff")
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), unique=True, nullable=False)
@@ -78,13 +81,14 @@ class Trek(db.Model):
     staff = db.relationship("Staff", back_populates="treks")
     bookings = db.relationship("Booking", back_populates="treks")
     staff_id = db.Column(db.Integer, db.ForeignKey("staff.id"), nullable=False)
+    __table_args__ = (db.UniqueConstraint("name","start_date","location"),)
 
 class Booking(db.Model):
     __tablename__ = "bookings"
     id = db.Column(db.Integer, primary_key=True)
     booking_date = db.Column(db.DateTime(timezone=True), default=lambda:datetime.now(UTC))
-    status = db.Column(db.Enum(BookStatus), default=BookStatus.booked)
-    participants = db.Column(db.Integer, default=1)
+    status = db.Column(db.Enum(BookStatus), default=BookStatus.open)
+    participants = db.Column(db.Integer, default=0, nullable=False)
     treks = db.relationship("Trek", back_populates="bookings")
     trekker = db.relationship("Trekker", back_populates="bookings")
     trekker_id = db.Column(db.Integer, db.ForeignKey("trekker.id"), nullable=False)
